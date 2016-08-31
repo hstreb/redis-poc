@@ -12,15 +12,13 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
 @ComponentScan("com.hstreb.redispoc")
-@PropertySource("classpath:/redis.properties")
 public class AppConfig {
 
-    private
     @Value("${redis.host}")
-    String redisHost;
-    private
+    private String redisHost;
+
     @Value("${redis.port}")
-    int redisPort;
+    private int redisPort;
 
     @Bean
     public static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
@@ -32,7 +30,6 @@ public class AppConfig {
         JedisConnectionFactory factory = new JedisConnectionFactory();
         factory.setHostName(redisHost);
         factory.setPort(redisPort);
-        factory.setUsePool(true);
         return factory;
     }
 
@@ -40,9 +37,6 @@ public class AppConfig {
     RedisTemplate<String, String> redisTemplate() {
         RedisTemplate<String, String> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(jedisConnectionFactory());
-        redisTemplate.setKeySerializer(new StringRedisSerializer());
-        redisTemplate.setValueSerializer(new StringRedisSerializer());
-        redisTemplate.afterPropertiesSet();
         return redisTemplate;
     }
 }
