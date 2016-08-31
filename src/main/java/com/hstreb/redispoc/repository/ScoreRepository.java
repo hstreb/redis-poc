@@ -4,6 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hstreb.redispoc.model.Score;
 import com.hstreb.redispoc.model.ScoreKey;
+import com.hstreb.redispoc.service.ScoreService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
@@ -16,6 +19,8 @@ import java.util.stream.Collectors;
 
 @Repository
 public class ScoreRepository {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ScoreRepository.class);
 
     public static final String KEY = "score";
 
@@ -39,53 +44,47 @@ public class ScoreRepository {
     }
 
     private Score getScore(ZSetOperations.TypedTuple<String> t) {
-        try {
-            ScoreKey scoreKey = mapper.readValue(t.getValue(), ScoreKey.class);
-            return new Score(scoreKey,  t.getScore());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
+        return new Score(getScoreKey(t),  t.getScore());
     }
 
     public void add(Score score) {
-        try {
-            zSetOperations.add(KEY, mapper.writeValueAsString(score.getKey()), score.getScore());
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
+        zSetOperations.add(KEY, getStringKey(score.getKey()), score.getScore());
     }
 
     public void updateKey(ScoreKey oldKey, ScoreKey newKey) {
-        try {
-            Double score = zSetOperations.score(KEY, mapper.writeValueAsString(oldKey));
-            updateKey(oldKey, newKey, score);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
-
+        Double score = zSetOperations.score(KEY, getStringKey(oldKey));
+        updateKey(oldKey, newKey, score);
     }
 
-    public void updateKey(ScoreKey oldKey, ScoreKey newKey, Double value) {
-        try {
-            zSetOperations.remove(KEY, mapper.writeValueAsString(oldKey));
-            zSetOperations.add(KEY, mapper.writeValueAsString(newKey), value);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
+    public void updateKey(ScoreKey oldScoreKey, ScoreKey newScoreKey, Double value) {
+        zSetOperations.remove(KEY, getStringKey(oldScoreKey));
+        zSetOperations.add(KEY, getStringKey(newScoreKey), value);
     }
 
     public Long rank(ScoreKey key) {
-        try {
-            return zSetOperations.rank(KEY, mapper.writeValueAsString(key));
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
-        return null;
+        return zSetOperations.rank(KEY, getStringKey(key));
     }
 
     public void removeAll() {
         zSetOperations.removeRange(KEY, 0, -1);
+    }
+
+    private ScoreKey getScoreKey(ZSetOperations.TypedTuple<String> t) {
+        try {
+            return mapper.readValue(t.getValue(), ScoreKey.class);
+        } catch (IOException e) {
+            LOGGER.error("Error on get score from json. {}", t.getValue(), e);
+        }
+        return null;
+    }
+
+    private String getStringKey(ScoreKey oldScoreKey) {
+        try {
+            return mapper.writeValueAsString(oldScoreKey);
+        } catch (JsonProcessingException e) {
+            LOGGER.error("Error on write score to json. {}", oldScoreKey, e);
+        }
+        return null;
     }
 
 }
