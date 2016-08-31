@@ -1,5 +1,7 @@
 package com.hstreb.redispoc.service;
 
+import com.hstreb.redispoc.model.Score;
+import com.hstreb.redispoc.model.ScoreKey;
 import com.hstreb.redispoc.repository.ScoreRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,20 +23,20 @@ public class ScoreService {
     public void run() {
         LOGGER.info(salute);
         repository.removeAll();
-        add("Second", 9.0);
-        add("First", 10.0);
+        ScoreKey first = new ScoreKey("1", "First", false);
+        ScoreKey second = new ScoreKey("2", "Second", false);
+        ScoreKey thrid = new ScoreKey("3", "Thrird", false);
+        repository.add(new Score(second, 9.0));
+        repository.add(new Score(first, 10.0));
         list();
-        add("Wrong", 9.1);
+        repository.add(new Score(thrid, 9.1));
         list();
-        add("Second", 9.5);
+        repository.add(new Score(second, 9.5));
         list();
-        repository.updateKey("Wrong", "Thrid");
+        ScoreKey thridPro = new ScoreKey(thrid.getId(), thrid.getName(), true);
+        repository.updateKey(thrid, thridPro);
         list();
-        LOGGER.info("'Second' position: " + (repository.rank("Second") + 1));
-    }
-
-    private void add(String second, double value) {
-        repository.add(second, value);
+        LOGGER.info("'Second' position: " + (repository.rank(second) + 1));
     }
 
     private void list() {
