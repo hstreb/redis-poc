@@ -23,7 +23,7 @@ public class ScoreService {
         repository.removeAll();
         ScoreKey first = new ScoreKey("1", "First", false);
         ScoreKey second = new ScoreKey("2", "Second", false);
-        ScoreKey thrid = new ScoreKey("3", "Thrird", false);
+        ScoreKey thrid = new ScoreKey("3", "Third", false);
         repository.add(new Score(second, 9.0));
         repository.add(new Score(first, 10.0));
         list();
